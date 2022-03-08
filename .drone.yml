@@ -1,5 +1,6 @@
 ---
 kind: pipeline
+type: docker
 name: default
 
 platform:
@@ -7,45 +8,53 @@ platform:
   arch: amd64
 
 steps:
-- name: build
-  image: rancher/dapper:1.11.2
-  commands:
-  - dapper ci
-  privileged: true
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
+  - name: build
+    image: rancher/dapper:v0.5.8
+    environment:
+      CROSS: "1"
+    commands:
+      - dapper ci
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
 
-- name: stage-binaries
-  image: rancher/dapper:1.11.2
-  commands:
-  - cp -r ./bin/* ./package/
-  when:
-    refs:
-      include:
-      - "refs/heads/master"
-    event:
-    - tag
+  - name: install-buildx-support
+    image: tonistiigi/binfmt
+    privileged: true
+    entrypoint:
+      - /usr/bin/binfmt
+    command:
+      - --install
+      - all
+    when:
+      branch:
+        - master
+      event:
+        - tag
 
-- name: publish-image
-  image: plugins/docker
-  settings:
-    context: package/
-    dockerfile: package/Dockerfile
-    repo: rancher/log-aggregator
-    tag: ${DRONE_TAG}
-    password:
-      from_secret: docker_password
-    username:
-      from_secret: docker_username
-  when:
-    refs:
-      include:
-      - "refs/heads/master"
-    event:
-    - tag
+  - name: publish-image
+    image: thegeeklab/drone-docker-buildx
+    privileged: true
+    settings:
+      dockerfile: package/Dockerfile
+      platforms: linux/amd64,linux/arm64/v8
+      repo: cnrancher/log-aggregator
+      tag: ${DRONE_TAG}
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
+    when:
+      refs:
+        include:
+          - "refs/heads/master"
+      event:
+        - tag
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
 
 volumes:
-- name: docker
-  host:
-    path: /var/run/docker.sock
+  - name: docker
+    host:
+      path: /var/run/docker.sock

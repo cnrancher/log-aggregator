@@ -35,7 +35,9 @@ func main() {
 	app.Usage = "local-flexvolme driver to mount log to workload logging path"
 
 	app.Commands = getCommand(logger)
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		logrus.Fatal(err)
+	}
 }
 
 func getCommand(logger *logrus.Logger) []cli.Command {

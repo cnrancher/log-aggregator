@@ -7,18 +7,16 @@ ARCH=${ARCH:-"amd64"}
 SUFFIX=""
 [ "${ARCH}" != "amd64" ] && SUFFIX="_${ARCH}"
 
-cd $(dirname $0)/../package
+cd $(dirname $0)/..
 
 TAG=${TAG:-${VERSION}${SUFFIX}}
-REPO=${REPO:-rancher}
+REPO=${REPO:-cnrancher}
 
 if echo $TAG | grep -q dirty; then
     TAG=dev
 fi
 
-cp ../bin/log-aggregator .
-
 IMAGE=${REPO}/log-aggregator:${TAG}
-docker build -t ${IMAGE} .
-echo ${IMAGE} > ../dist/images
+docker build -t ${IMAGE} -f package/Dockerfile .
+echo ${IMAGE} > ./dist/images
 echo Built ${IMAGE}
