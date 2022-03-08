@@ -28,7 +28,7 @@ steps:
       - all
     when:
       branch:
-        - master
+        - pandaria
       event:
         - tag
 
@@ -47,7 +47,7 @@ steps:
     when:
       refs:
         include:
-          - "refs/heads/master"
+          - "refs/heads/pandaria"
       event:
         - tag
     volumes:
@@ -58,3 +58,6 @@ volumes:
   - name: docker
     host:
       path: /var/run/docker.sock
+
+node:
+  instance: agent-amd64
